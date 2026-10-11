@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <link rel="stylesheet" href="/static/css/style.css">
+        <title>掛川整体からだや</title>
+        <style>
+        :root {
+            --col-count: <%= monthlyThursdays.length + 1.5 %>;  /* 行ヘッダー(timeslot)は1.5倍幅 */
+            --row-count: <%= timeslots.length + 3 %>;           /* ナビ＋ヘッダー＋テーブルヘッダーの３行 */
+        }
+        </style>
+    </head>
+    <body>
+        <!-- 初期化処理（ユーザー情報） -->
+        <% 
+            const loggedIn = user != null;
+            const isAdmin = user && user.role == "admin";
+        %>
+
+        <!-- ナビゲーション -->
+        <%- include('partials/header') %>
+
+        <div class="container">
+
+            <!-- ヘッダー -->
+            <h2 class="header-row">
+                <div class="nav-buttons">
+                    <a href="/ymd/<%= prevmonth %>"><button>前月</button></a>
+                    <%= title %>開催
+                    <a href="/ymd/<%= nextmonth %>"><button>翌月</button></a>
+                </div>
+
+                <% if (!loggedIn) { %>
+                <form id="loginForm" action="/login" method="post">
+                    <input id="empnoinput" class="empno-input" name="empnoinput" placeholder="従業員コード">
+                </form>
+                <% } %>
+            </h2>
+
+
+
+            <!-- PC版：横テーブル -->
+            <div class="pc-table">
+            <table class="schedule-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <% monthlyThursdays.forEach(day => { %>
+                        <th><%= d2mdw(day) %></th>
+                    <% }) %>
+                </tr>
+            </thead>
+            <tbody>
+            <% for (let i = 0; i < timeslots.length; i++) { %>
+                <tr>
+                    <th><%= timeslots[i] %></th>
+
+                    <% monthlyThursdays.forEach(day => { %>
+                        <% const r = findResv(day, i); %>
+
+                        <% if (r) { %>
+
+                            <% 
+                                const isMine = loggedIn && user && user.empno && user.empno === r.EMPNO;
+                                const isFullTimeEmployee = loggedIn && user && user.empno &&
+                                    (user.empno.startsWith('1') || user.empno.startsWith('2') ||
+                                    user.empno.startsWith("01") || user.empno.startsWith("02"));
+                            %>
+                            <% if (isAdmin) { %>
+                                <td class="cell reserved-fulltime"
+                                    data-json='<%- JSON.stringify(r) %>'
+                                    onclick="openDetail(this)">
+                                    <%= r.EMPNM %>
+                                </td>
+
+                            <% } else if (isMine && isFullTimeEmployee) { %>
+                                <td class="cell reserved-fulltime"
+                                    data-json='<%- JSON.stringify(r) %>'
+                                    onclick="openDetail(this)">
+                                    済
+                                </td>
+
+                            <% } else if (isMine && !isFullTimeEmployee) { %>
+                                <td class="cell reserved-other"
+                                    data-json='<%- JSON.stringify(r) %>'
+                                    onclick="openDetail(this)">
+                                </td>
+
+                            <% } else { %>
+                                <td class="cell reserved">済</td>
+                            <% } %>
+
+
+                        <% } else { %>
+                            <% 
+                                // 過去日判定
+                                const today = new Date();
+                                const cellDate = new Date(day);   // day は "2026-10-01" の形式
+                                const isPast = cellDate < today;
+                            %>
+                            <% if (isPast) { %>
+                                <!-- 過去日の空き枠：クリック不可 -->
+                                <td class="cell empty excluded"></td>
+
+                            <% } else if (!loggedIn) { %>
+                                <!-- 未ログイン：クリック不可 -->
+                                <td class="cell"
+                                    onclick="javascript:alert('ログイン後に予約を行って下さい．')">
+                                </td>
+
+                            <% } else { %>
+                                <!-- 未来日の空き枠：クリック可能 -->
+                                <td class="cell empty reserve-ok"
+                                    data-day="<%= day %>"
+                                    data-slot="<%= i %>"
+                                    onclick="openNotice(this)">
+                                </td>
+
+                            <% } %>
+                        <% } %>
+                    <% }) %>
+                </tr>
+            <% } %>
+            </tbody>
+            </table>
+            </div>
+
+
+
+            <!-- スマホ版：縦積みカード形式 -->
+            <div class="sp-cards">
+            <%
+                // monthlyThursdays は "2026-10-01" のような文字列なので
+                // Date に変換して降順ソートする
+                const sortedDays = [...monthlyThursdays].sort((a, b) => {
+                    return new Date(b) - new Date(a);   // 新しい日付が先
+                });
+            %>
+            <% sortedDays.forEach(day => { %>
+                <div class="day-card">
+                <div class="day-title"><%= d2mdw(day) %></div>
+                <% for (let i = 0; i < timeslots.length; i++) { %>
+                    <% 
+                        const r = findResv(day, i);
+                        const today = new Date();
+                        const cellDate = new Date(day);
+                        const isPast = cellDate < today;
+                        const isMine = user && user.empno === (r ? r.EMPNO : "");
+                    %>
+                    <% if (r) { %>
+
+                        <!-- 自分の予約 -->
+                        <% if (isMine) { %>
+                            <div class="slot-card mine <%= (isPast) ? 'reserved' : 'reserved-fulltime' %>"
+                                data-json='<%- JSON.stringify(r) %>'
+                                onclick="openDetail(this)">
+                                <div class="slot-time">
+                                    <%= timeslots[i] %>
+                                    <%= (isPast) ? '（施術済）' : '（予約済）' %>
+                                </div>
+                            </div>
+
+                        <!-- 他人の予約 -->
+                        <% } else { %>
+                            <div class="slot-card reserved">
+                                <div class="slot-time">
+                                    <%= timeslots[i] %>
+                                    <%= (isPast) ? '（施術済）' : '（予約あり）' %>
+                                </div>
+                            </div>
+
+                        <% } %>
+
+                    <!-- 過去日の空き枠（クリック不可） -->
+                    <% } else if (isPast) { %>
+                        <div class="slot-card excluded">
+                            <div class="slot-time"><%= timeslots[i] %></div>
+                        </div>
+
+                    <!-- 未ログイン（クリック不可） -->
+                    <% } else if (!loggedIn) { %>
+                        <div class="slot-card empty"
+                            onclick="javascript:alert('ログイン後に予約を行って下さい．')">
+                            <div class="slot-time"><%= timeslots[i] %></div>
+                        </div>
+
+                    <!-- 空き枠（予約可） -->
+                    <% } else { %>
+                        <div class="slot-card empty"
+                            data-day="<%= day %>"
+                            data-slot="<%= i %>"
+                            onclick="openReserveDirect(this)">
+                            <div class="slot-time"><%= timeslots[i] %></div>
+                        </div>
+
+                    <% } %>
+                <% } %>
+                </div>
+            <% }) %>
+            </div>
+
+
+
+
+            <!-- お知らせポップアップ画面 -->
+            <div id="notice-modal" class="modal">
+            <div class="notice-modal-content">
+                <h3>お知らせ</h3>
+                <p>施術30分<br>自己負担額1,500円でご利用いただけます。</p>
+
+                <div class="notice-buttons">
+                    <button onclick="closeNotice()">閉じる</button>
+                    <button onclick="openReserve()" class="primary">了解しました</button>
+                </div>
+            </div>
+            </div>
+
+
+
+            <!-- 予約画面 -->
+            <div id="reserve-modal" class="modal">
+            <div class="reserve-modal-content">
+                <h3>予約画面</h3>
+
+                <div class="reserve-row">
+                    <label class="reserve-label">日付：</label>
+                    <div id="reserve-date" class="reserve-value"></div>
+                </div>
+                <div class="reserve-row">
+                    <label class="reserve-label">時間：</label>
+                    <div id="reserve-timeslot-name" class="reserve-value"></div>
+                </div>
+                <label>施術内容:</label>
+                <select id="reserve-treatment">
+                    <option>腰痛</option>
+                    <option>肩凝り</option>
+                    <option>頭痛</option>
+                    <option>股関節痛</option>
+                    <option>膝痛</option>
+                    <option>自律神経の不調</option>
+                    <option>その他</option>
+                </select>
+                <div class="reserve-group">
+                    <label for="reserve-note">その他お悩み事:</label>
+                    <textarea id="reserve-note" name="note" rows="4"
+                        placeholder="肩こり、腰痛、疲労、気になる症状など自由にご記入ください"></textarea>
+                </div>
+                <input type="hidden" id="reserve-timeslot" name="reserve-timeslot" value="" />
+                <input type="hidden" id="reserve-empno" name="reserve-empno" 
+                    value="<%= (loggedIn && user && user.empno) ? user.empno : '' %>" />
+                <input type="hidden" id="reserve-name" name="reserve-name"
+                    value="<%= (loggedIn && user && user.empno) ? user.name : '' %>" />
+                <div class="reserve-buttons">
+                    <button onclick="closeReserve()">閉じる</button>
+                    <button id="reserve-cancel-button" onclick="reserveCancel()">取消</button>
+                    <button id="reserve-button" onclick="reserve()">予約</button>
+                </div>
+            </div>
+            </div>
+
+
+
+        </div>
+        <script src="/static/javascript/reservation.js"></script>
+
+
+    </body>
+</html>

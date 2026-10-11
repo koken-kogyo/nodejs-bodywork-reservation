@@ -1,0 +1,338 @@
+body {
+    font-family:sans-serif;
+    margin:0;
+    background:#f5f5f5
+}
+.container {
+    padding-inline: 20px;
+}
+
+
+
+/* ナビゲーションバー */
+.navbar {
+    background:#0d6efd;
+    color:#fff;
+    padding:15px;
+    display:flex;
+    justify-content:space-between
+}
+.logo {
+    font-weight: bold;
+}
+.nav-buttons {
+    font-size: larger;
+}
+.nav-buttons button {
+    font-size: large;
+    margin-inline: 10px;
+    border-radius: 6px;
+}
+.user-info {
+    display: flex;
+    gap: 12px; /* 名前とログアウトの間隔 */
+    align-items: center;
+}
+.user-name {
+    font-weight: bold;
+}
+.admin {
+    color: red;
+}
+.logout-link {
+    font-size: x-small;
+    text-decoration: none;
+}
+.logout-link:hover {
+    text-decoration: underline;
+}
+
+
+
+/* ヘッダーデザイン */
+.header-row {
+    display: flex;
+    justify-content: space-between; /* 左右に振り分ける */
+    align-items: center;
+}
+.empno-row {
+    display: flex;
+    justify-content: flex-end; /* 右端に寄せる */
+    margin-top: 8px;
+}
+.empno-row input {
+    padding: 4px 8px;
+}
+.empno-input {
+    width: 100px;        /* 7文字にちょうどいい */
+    padding: 6px 8px;
+    font-size: 15px;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    text-align: center;
+}
+
+
+
+/* ポップアップのデザイン */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.4)
+}
+.modal h3 {
+    margin-top: 0px;
+    margin-bottom: 0.5em;
+}
+
+
+
+/* おしらせ画面 */
+.notice-modal-content {
+    background: #fff;
+    border-radius: 5px;
+    font-size: xx-large;
+    max-width: 800px;
+    margin: 60px auto;
+    padding: 20px
+}
+.notice-buttons {
+    display: flex;
+    justify-content: flex-end; /* 右寄せ */
+    gap: 10px;                 /* ボタン間の余白 */
+    margin-top: 20px;
+}
+.notice-buttons button {
+    padding: 6px 14px;
+    font-size: x-large;
+    border-radius: 6px;
+}
+.notice-buttons .primary {
+    background-color: #4CAF50;
+    color: white;
+    width: 9em;
+}
+
+/* 予約画面 */
+.reserve-modal-content {
+    background: #fff;
+    border-radius: 5px;
+    font-size: xx-large;
+    max-width: 500px;
+    margin: 60px auto;
+    padding: 20px
+}
+.reserve-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.reserve-label {
+    width: 3.5em;
+}
+.reserve-value {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid #aac; /* 枠を付ける */
+    border-radius: 3px;
+    background: #cce;
+}
+#reserve-treatment {
+    font-size: xx-large;
+    margin-left: 3.5em;
+    width: calc(100% - 3.5em);
+    margin-bottom: 10px;
+    border-radius: 3px;
+}
+#reserve-note {
+    width: 100%;
+    padding: 10px;
+    font-size: x-large;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    resize: vertical; /* 高さだけ変更可能 */
+    box-sizing: border-box;
+}
+.reserve-buttons {
+    display: flex;
+    justify-content: flex-end; /* 右寄せ */
+    gap: 10px;                 /* ボタン間の余白 */
+    margin-top: 10px;
+}
+.reserve-buttons button {
+    font-size: x-large;
+    width: 5em;
+    height: 3.5em;
+    border-radius: 6px;
+}
+#reserve-cancel-button {
+    background-color: lightcoral;
+    color: yellow;
+}
+#reserve-button {
+    background-color: #4CAF50;
+    color: white;
+}
+/* スマホ（768px以下）の画面サイズ設定 */
+@media screen and (max-width: 768px) {
+    .nav-buttons {font-size: x-large;}
+    .nav-buttons button {
+        font-size: small;
+        margin-inline: 2px;
+    }
+    .reserve-modal-content {
+        width: calc(100vw * 0.8);
+    }
+}
+/* スマホ（縦700px以下）の画面サイズ設定 */
+@media screen and (max-height: 700px) and (orientation: portrait) {
+    .nav-buttons {font-size: x-large;}
+    .nav-buttons button {
+        font-size: large;
+        margin-inline: 2px;
+    }
+    .reserve-modal-content {
+        width: calc(100vw * 0.8);
+        font-size: large;
+    }
+    #reserve-treatment {font-size: x-large;}
+    #reserve-note {font-size: large;}
+}
+
+
+
+
+
+
+
+
+/* スマホカードのデザイン */
+.day-card {
+    margin: 12px 0;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+.day-title {
+    font-size: x-large;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+.slot-item {
+    padding: 6px 0;
+    border-bottom: 1px solid #eee;
+}
+.slot-card {
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.slot-time {
+    font-size: 16px;
+    font-weight: bold;
+}
+.slot-status {
+    margin-top: 6px;
+    font-size: 14px;
+}
+.slot-card.empty {
+    border-left: 5px solid #4CAF50; /* 緑：空き */
+}
+.slot-card.reserved {
+    border-left: 5px solid #999; /* グレー：予約済み */
+}
+.slot-card.mine {
+    border-left: 5px solid #FF9800; /* オレンジ：自分の予約 */
+}
+
+
+
+
+
+
+
+
+
+
+/* PC版のデザイン */
+.pc-table {
+    width: calc(100vw - 100px);
+    height: calc(100vh - 180px);
+    margin: 20px;
+    overflow: auto;
+}
+
+.schedule-table {
+    width: 100%;
+    height: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+/* 横幅：画面幅 ÷ 列数 */
+.schedule-table th,
+.schedule-table td {
+    width: calc((100vw - 120px) / var(--col-count));
+    height: calc((100vh - 200px) / var(--row-count));
+    text-align: center;
+    border: 1px solid #ccc;
+    font-size: x-large;
+}
+
+/* timeslot 列だけ 1.5倍 */
+.schedule-table th:first-child,
+.schedule-table td:first-child {
+    width: calc(((100vw - 120px) / var(--col-count)) * 1.5);
+}
+
+.schedule-table th {
+    background-color: rgb(225, 238, 253);
+}
+
+/* （セル設定）過去日 */
+.excluded {
+    background-color: LightSlateGray;
+}
+/* （セル設定）予約済み */
+.reserved {
+    background-color: LightSlateGray;
+    color: white;
+    font-size: x-large;
+    font-weight: 600;
+}
+/* （セル設定）正社員の自分の予約 */
+.reserved-fulltime {
+    background-color: dodgerblue;
+    color: white;
+    cursor: pointer;
+    font-size: x-large;
+    font-weight: 600;
+}
+/* （セル設定）派遣社員の自分の予約 */
+.reserved-other {
+    background-color: LimeGreen;
+    color: whitesmoke;
+    cursor: pointer;
+    font-size: x-large;
+    font-weight: 600;
+}
+.reserve-ok {
+    cursor: pointer;
+}
+
+
+
+
+
+/* PC版を表示、スマホ版を非表示 */
+.pc-table { display: block; }
+.sp-cards { display: none; }
+
+/* スマホ（768px以下）では逆にする */
+@media screen and (max-width: 768px) {
+    .pc-table { display: none; }
+    .sp-cards { display: block; }
+}

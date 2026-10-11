@@ -1,6 +1,6 @@
 const mysql = require('mysql2/promise');
-const { mysqlConfig } = require('../config.js');
-const { decryptPassword } = require("./decrypt-password.js");
+const { mysqlConfig } = require('../../config.js');
+const { decryptPassword } = require("../security/decrypt-password.js");
 const decPasswd = decryptPassword(mysqlConfig.PASSWORD);
 
 // MySQL接続情報
@@ -40,30 +40,25 @@ exports.getKM0010 = async (empno) => {
 
 // からだや予約ファイル取得 API
 // 月度をyyyymmで指定
-exports.getKD7000 = async (yyyymm) => {
-     if (!isFinite(yyyymm) || yyyymm.length != 6) {
-        throw new RangeError("引数は6文字の数値である必要があります");
-    }
+exports.getKD7000 = async (first, last) => {
     const sql = 
         "select a.*, m.NAME from kd7000 a inner join km0010 m on m.EMPNO=a.EMPNO " +
-        "where a.RESERVDT between " +
-            "DATE_FORMAT(DATE_SUB(CONCAT(?, '01'), INTERVAL 1 MONTH), '%Y-%m-21') and " +
-            "DATE_FORMAT(CONCAT(?, '01'), '%Y-%m-20') " + 
+        "where a.RESERVDT between ? and ? " + 
         "order by a.RESERVDT asc, a.TIMESLOT asc";
-    return await getDatabase(sql, [yyyymm, yyyymm]);
+    return await getDatabase(sql, [first, last]);
 };
 
 // からだや予約ファイル登録更新
-exports.insupdateKD7000 = async (reservdt, timeslot, empno, treatment, note) => {
+exports.insupdateKD7000 = async (reservdt, timeslot, stdt, eddt, empno, empnm, treatment, note, useragent) => {
     const treatmentValue = treatment === '' ? null : treatment.trim();
     const noteValue = note === '' ? null : note.trim();
     const result = await getDatabase(
-        "insert into kd7000 (RESERVDT, TIMESLOT, EMPNO, TREATMENT, NOTE, INSTDT) "
-            + "values (?, ?, ?, ?, ?, now())"
+        "insert into kd7000 (RESERVDT, TIMESLOT, STDT, EDDT, EMPNO, EMPNM, TREATMENT, NOTE, USERAGENT, INSTDT) "
+            + "values (?, ?, ?, ?, ?, ?, ?, ?, ?, now())"
             + "on duplicate key update "
             + "TREATMENT = values(TREATMENT), "
             + "NOTE = values(NOTE)"
-            , [reservdt, timeslot, empno, treatmentValue, noteValue]
+            , [reservdt, timeslot, stdt, eddt, empno, empnm, treatmentValue, noteValue, useragent]
     );
 };
 

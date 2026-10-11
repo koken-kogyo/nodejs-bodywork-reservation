@@ -38,7 +38,4 @@ function decryptPassword(encPasswd) {
     return decPasswd;
 }
 
-// Node.js 用エクスポート
-module.exports = {
-    decryptPassword,
-};
+module.exports = { decryptPassword };

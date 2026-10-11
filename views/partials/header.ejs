@@ -1,0 +1,11 @@
+<nav class="navbar">
+    <div class="logo">からだや予約システム</div>
+    <div class="user-info">
+        <% if (user) { %>
+            <span class="user-name <%= user.role %>">
+                <%= user.name %> さん
+            </span>
+            <a href="/logout" class="logout-link">ログアウト</a>
+        <% } %>
+    </div>
+</nav>
