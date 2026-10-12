@@ -15,8 +15,8 @@ app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
 // BodyParser設定
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ limit: "5mb", extended: true }));
 
 // ファビコン設定
 const favicon = require("serve-favicon");
@@ -145,31 +145,63 @@ app.get("/orders/:yyyymm", async (req, res, next) => {
 // からだや予約ファイル登録または更新 API
 // HTTPメソッド: POST
 app.post("/api/reserve", async (req, res) => {
-    const useragent = req.headers["user-agent"];
-    const ip =
-        req.headers["x-forwarded-for"]?.split(",")[0] ||
-        req.socket.remoteAddress;
-    const { reservdt, timeslot, stdt, eddt, empno, empnm, treatment, note } = req.body;
     try {
+        const { reservdt, timeslot, stdt, eddt, empno, empnm, treatment, note } = req.body;
+        const useragent = req.headers["user-agent"];
+        const ip =
+            req.headers["x-forwarded-for"]?.split(",")[0] ||
+            req.socket.remoteAddress;
+        const ret = await mysqlHandler.checkReservedKD7000(reservdt, timeslot, empno)
+        if (!ret) {
+            return res.status(409).json({ ok: false, msg: "その枠は既に予約されています。" });
+        }
         await mysqlHandler.insupdateKD7000(reservdt, timeslot, stdt, eddt, empno, empnm, treatment, note, `[${ip}]${useragent}`);
-        res.status(200).end();
+        res.json({ ok: true });
     } catch (err) {
-        const msg = "API登録メソッドで" + err;
         const logger = log4js.getLogger("e");
-        logger.error(msg);
-        res.status(299).end();
+        logger.error("API登録メソッドで" + err);
+        res.status(500).json({
+            ok: false,
+            msg: "API登録メソッドでエラーが発生しました。情報システム課に連絡してください．"
+        });
     }
 });
 
 // からだや予約ファイル削除 API
 // HTTPメソッド: DELETE
-app.delete('/orders', async (req, res) => {
-    const { reservdt, timeslot } = req.body;
+app.delete('/api/reserveCancel', async (req, res) => {
     try {
+        const { reservdt, timeslot } = req.body;
         await mysqlHandler.deleteKD7000(reservdt, timeslot);
-        res.status(200).end();
+        res.json({ ok: true });
     } catch (err) {
-        res.status(299).end();
+        const logger = log4js.getLogger("e");
+        logger.error("API削除メソッドで" + err);
+        res.status(500).json({
+            ok: false,
+            msg: "API削除メソッドでエラーが発生しました。情報システム課に連絡してください．"
+        });
+    }
+});
+
+// メール送信
+app.post("/api/sendmail", async (req, res) => {
+    try {
+        const { msg, screenshot } = req.body;
+        await H.sendScreenshotByEMail(msg, screenshot);
+        res.json({ ok: true });
+    } catch (err) {
+        console.error("メール送信エラー:", err);
+        res.status(500).json({ ok: false, msg: "メール送信に失敗しました。" });
+    }
+});
+app.get("/api/testmail", async (req, res) => {
+    try {
+        await H.sendTestMail();
+        res.json({ ok: true, msg: "テストメール送信しました。" });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ ok: false, msg: "テストメール送信に失敗しました。" });
     }
 });
 

@@ -47,6 +47,10 @@
         
 ~~~
 
+## メール送信
+- Microsoft Graph API メール送信
+- > npm install @azure/identity @microsoft/microsoft-graph-client isomorphic-fetch
+
 ## データベース  
 
 | Table    | Name                      |  

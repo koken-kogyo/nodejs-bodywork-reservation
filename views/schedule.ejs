@@ -11,6 +11,10 @@
             --row-count: <%= timeslots.length + 3 %>;           /* ナビ＋ヘッダー＋テーブルヘッダーの３行 */
         }
         </style>
+        <!-- script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js"></script> -->
+        <!-- script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script> -->
+        <script src="/static/javascript/dayjs/1.11.10/dayjs.min.js"></script>
+        <script src="/static/javascript/html2canvas/1.4.1/html2canvas.min.js"></script>
     </head>
     <body>
         <!-- 初期化処理（ユーザー情報） -->
@@ -22,7 +26,7 @@
         <!-- ナビゲーション -->
         <%- include('partials/header') %>
 
-        <div class="container">
+        <div id="container" class="container">
 
             <!-- ヘッダー -->
             <h2 class="header-row">
@@ -31,10 +35,13 @@
                     <%= title %>開催
                     <a href="/ymd/<%= nextmonth %>"><button>翌月</button></a>
                 </div>
-
+                <input type="hidden" id="prevmonth" name="prevmonth" value="<%= prevmonth %>" />
+                <input type="hidden" id="nextmonth" name="nextmonth" value="<%= nextmonth %>" />
+                <!-- テストスタブ button onclick="ScreenshotTest()">html2canvas dayjs graphClient.api</button-->
                 <% if (!loggedIn) { %>
                 <form id="loginForm" action="/login" method="post">
-                    <input id="empnoinput" class="empno-input" name="empnoinput" placeholder="従業員コード">
+                    <input id="empnoinput" class="empno-input" name="empnoinput" 
+                        placeholder="従業員コード" maxlength="7" oninput="inputChange()">
                 </form>
                 <% } %>
             </h2>
@@ -42,7 +49,7 @@
 
 
             <!-- PC版：横テーブル -->
-            <div class="pc-table">
+            <div id="pc-wrapper">
             <table class="schedule-table">
             <thead>
                 <tr>
@@ -69,21 +76,27 @@
                                     user.empno.startsWith("01") || user.empno.startsWith("02"));
                             %>
                             <% if (isAdmin) { %>
-                                <td class="cell reserved-fulltime"
+                                <td class="cell mine reserved-fulltime"
+                                    data-day="<%= day %>"
+                                    data-slot="<%= i %>"
                                     data-json='<%- JSON.stringify(r) %>'
                                     onclick="openDetail(this)">
                                     <%= r.EMPNM %>
                                 </td>
 
                             <% } else if (isMine && isFullTimeEmployee) { %>
-                                <td class="cell reserved-fulltime"
+                                <td class="cell mine reserved-fulltime"
+                                    data-day="<%= day %>"
+                                    data-slot="<%= i %>"
                                     data-json='<%- JSON.stringify(r) %>'
                                     onclick="openDetail(this)">
                                     済
                                 </td>
 
                             <% } else if (isMine && !isFullTimeEmployee) { %>
-                                <td class="cell reserved-other"
+                                <td class="cell mine reserved-other"
+                                    data-day="<%= day %>"
+                                    data-slot="<%= i %>"
                                     data-json='<%- JSON.stringify(r) %>'
                                     onclick="openDetail(this)">
                                 </td>
@@ -130,6 +143,7 @@
 
 
             <!-- スマホ版：縦積みカード形式 -->
+            <div id="sp-wrapper">
             <div class="sp-cards">
             <%
                 // monthlyThursdays は "2026-10-01" のような文字列なので
@@ -154,6 +168,8 @@
                         <!-- 自分の予約 -->
                         <% if (isMine) { %>
                             <div class="slot-card mine <%= (isPast) ? 'reserved' : 'reserved-fulltime' %>"
+                                data-day="<%= day %>"
+                                data-slot="<%= i %>"
                                 data-json='<%- JSON.stringify(r) %>'
                                 onclick="openDetail(this)">
                                 <div class="slot-time">
@@ -164,7 +180,9 @@
 
                         <!-- 他人の予約 -->
                         <% } else { %>
-                            <div class="slot-card reserved">
+                            <div class="slot-card reserved"
+                                data-day="<%= day %>"
+                                data-slot="<%= i %>">
                                 <div class="slot-time">
                                     <%= timeslots[i] %>
                                     <%= (isPast) ? '（施術済）' : '（予約あり）' %>
@@ -199,6 +217,7 @@
                 <% } %>
                 </div>
             <% }) %>
+            </div>
             </div>
 
 
@@ -264,7 +283,6 @@
 
         </div>
         <script src="/static/javascript/reservation.js"></script>
-
 
     </body>
 </html>

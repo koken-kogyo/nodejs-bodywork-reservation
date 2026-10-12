@@ -74,6 +74,19 @@ body {
 
 
 
+/* CSSスライドアニメーション */
+#sp-wrapper {
+    transition: transform 0.3s ease;
+}
+.slide-left {
+    transform: translateX(-100%);
+}
+.slide-right {
+    transform: translateX(100%);
+}
+
+
+
 /* ポップアップのデザイン */
 .modal {
     display: none;
@@ -258,7 +271,7 @@ body {
 
 
 /* PC版のデザイン */
-.pc-table {
+#pc-wrapper {
     width: calc(100vw - 100px);
     height: calc(100vh - 180px);
     margin: 20px;
@@ -324,15 +337,20 @@ body {
 }
 
 
+.slot-highlight {
+    outline: 3px solid red;
+    outline-offset: 2px;
+    border-radius: 6px;
+}
 
 
 
 /* PC版を表示、スマホ版を非表示 */
-.pc-table { display: block; }
-.sp-cards { display: none; }
+#pc-wrapper { display: block; }
+#sp-wrapper { display: none; }
 
 /* スマホ（768px以下）では逆にする */
 @media screen and (max-width: 768px) {
-    .pc-table { display: none; }
-    .sp-cards { display: block; }
+    #pc-wrapper { display: none; }
+    #sp-wrapper { display: block; }
 }

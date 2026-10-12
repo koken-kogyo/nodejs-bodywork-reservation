@@ -48,7 +48,7 @@ exports.getKD7000 = async (first, last) => {
     return await getDatabase(sql, [first, last]);
 };
 
-// からだや予約ファイル登録更新
+// からだや予約ファイル - 登録または施術内容変更
 exports.insupdateKD7000 = async (reservdt, timeslot, stdt, eddt, empno, empnm, treatment, note, useragent) => {
     const treatmentValue = treatment === '' ? null : treatment.trim();
     const noteValue = note === '' ? null : note.trim();
@@ -62,13 +62,24 @@ exports.insupdateKD7000 = async (reservdt, timeslot, stdt, eddt, empno, empnm, t
     );
 };
 
-// からだや予約ファイル削除
+// からだや予約ファイル - 予約取り消し
 exports.deleteKD7000 = async (reservdt, timeslot) => {
     const result = await getDatabase(
         "delete from kd7000 where RESERVDT=? and TIMESLOT=?"
             , [reservdt, timeslot]
     );
 };
+
+// からだや予約ファイル - 予約済み確認
+exports.checkReservedKD7000 = async (reservdt, timeslot, empno) => {
+    const result = await getDatabase(
+        "select EMPNO from kd7000 where RESERVDT=? and TIMESLOT=?"
+            , [reservdt, timeslot]
+    );
+    // 予約なし || 自分の予約の場合 true ⇒ on duplicate key updateで更新
+    const ret = (result.length == 0 || result[0].EMPNO == empno);
+    return ret;
+}
 
 // 品目マスタ(M0500)存在チェック
 exports.isM0500 = async (hmcd) => {
