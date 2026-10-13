@@ -63,75 +63,76 @@
             <% for (let i = 0; i < timeslots.length; i++) { %>
                 <tr>
                     <th><%= timeslots[i] %></th>
-
                     <% monthlyThursdays.forEach(day => { %>
-                        <% const r = findResv(day, i); %>
-
+                        <% 
+                            const r = findResv(day, i); 
+                            const today = new Date();
+                            const cellDate = new Date(day);   // day は "2026-10-01" の形式
+                            const isPast = cellDate < today;
+                            const isMine = loggedIn && user && user.empno && user.empno === (r ? r.EMPNO : "");
+                            const isFullTimeEmployee = loggedIn && user && user.empno &&
+                                (user.empno.startsWith('1') || user.empno.startsWith('2') ||
+                                user.empno.startsWith("01") || user.empno.startsWith("02"));
+                            // 予約枠ロック判定（①と②は同時に予約出来ない）
+                            const findr0 = (i == 0 &&
+                                today >= new Date(2026, 9, 1) && 
+                                today < new Date(2027, 11, 1)) ? findResv(day, 1) : null;
+                            const findr1 = (i == 1 &&
+                                today >= new Date(2026, 9, 1) && 
+                                today < new Date(2027, 11, 1)) ? findResv(day, 0) : null;
+                        %>
                         <% if (r) { %>
 
-                            <% 
-                                const isMine = loggedIn && user && user.empno && user.empno === r.EMPNO;
-                                const isFullTimeEmployee = loggedIn && user && user.empno &&
-                                    (user.empno.startsWith('1') || user.empno.startsWith('2') ||
-                                    user.empno.startsWith("01") || user.empno.startsWith("02"));
-                            %>
-                            <% if (isAdmin) { %>
-                                <td class="cell mine reserved-fulltime"
+                            <!-- 社員の予約 -->
+                            <% if (isMine && isFullTimeEmployee) { %>
+                                <td class="cell mine <%= (isPast) ? 'reserved-fulltime-past' : 'reserved-fulltime' %>"
                                     data-day="<%= day %>"
                                     data-slot="<%= i %>"
                                     data-json='<%- JSON.stringify(r) %>'
                                     onclick="openDetail(this)">
-                                    <%= r.EMPNM %>
+                                    <%= (isAdmin) ? r.EMPNM : '済' %>
                                 </td>
 
-                            <% } else if (isMine && isFullTimeEmployee) { %>
-                                <td class="cell mine reserved-fulltime"
-                                    data-day="<%= day %>"
-                                    data-slot="<%= i %>"
-                                    data-json='<%- JSON.stringify(r) %>'
-                                    onclick="openDetail(this)">
-                                    済
-                                </td>
-
+                            <!-- 社員以外の予約 -->
                             <% } else if (isMine && !isFullTimeEmployee) { %>
-                                <td class="cell mine reserved-other"
+                                <td class="cell mine <%= (isPast) ? 'reserved-other-past' : 'reserved-other' %>"
                                     data-day="<%= day %>"
                                     data-slot="<%= i %>"
                                     data-json='<%- JSON.stringify(r) %>'
                                     onclick="openDetail(this)">
+                                    <%= (isAdmin) ? r.EMPNM : '済' %>
                                 </td>
 
+                            <!-- 他人の予約 -->
                             <% } else { %>
-                                <td class="cell reserved">済</td>
+                                <td class="cell reserved">
+                                    <%= (isAdmin) ? r.EMPNM : '済' %>
+                                </td>
+                            
                             <% } %>
 
+                        <!-- 過去日の空き枠：クリック不可 -->
+                        <% } else  if (isPast) { %>
+                            <td class="cell empty excluded"></td>
 
+                        <!-- 予約枠ロック -->
+                        <% } else if ((i == 0 && findr0) || (i == 1 && findr1)) { %>
+                            <td class="cell empty excluded"></td>
+
+                        <!-- 未ログイン：クリック不可 -->
+                        <% } else if (!loggedIn) { %>
+                            <td class="cell"
+                                onclick="javascript:alert('ログイン後に予約を行って下さい．')">
+                            </td>
+
+                        <!-- 空き枠（予約可） -->
                         <% } else { %>
-                            <% 
-                                // 過去日判定
-                                const today = new Date();
-                                const cellDate = new Date(day);   // day は "2026-10-01" の形式
-                                const isPast = cellDate < today;
-                            %>
-                            <% if (isPast) { %>
-                                <!-- 過去日の空き枠：クリック不可 -->
-                                <td class="cell empty excluded"></td>
+                            <td class="cell empty reserve-ok"
+                                data-day="<%= day %>"
+                                data-slot="<%= i %>"
+                                onclick="openNotice(this)">
+                            </td>
 
-                            <% } else if (!loggedIn) { %>
-                                <!-- 未ログイン：クリック不可 -->
-                                <td class="cell"
-                                    onclick="javascript:alert('ログイン後に予約を行って下さい．')">
-                                </td>
-
-                            <% } else { %>
-                                <!-- 未来日の空き枠：クリック可能 -->
-                                <td class="cell empty reserve-ok"
-                                    data-day="<%= day %>"
-                                    data-slot="<%= i %>"
-                                    onclick="openNotice(this)">
-                                </td>
-
-                            <% } %>
                         <% } %>
                     <% }) %>
                 </tr>
@@ -161,13 +162,36 @@
                         const today = new Date();
                         const cellDate = new Date(day);
                         const isPast = cellDate < today;
-                        const isMine = user && user.empno === (r ? r.EMPNO : "");
+                        const isMine = loggedIn && user && user.empno && user.empno === (r ? r.EMPNO : "");
+                        const isFullTimeEmployee = loggedIn && user && user.empno &&
+                            (user.empno.startsWith('1') || user.empno.startsWith('2') ||
+                            user.empno.startsWith("01") || user.empno.startsWith("02"));
+                        // 予約枠ロック判定（①と②は同時に予約出来ない）
+                        const findr0 = (i == 0 &&
+                            today >= new Date(2026, 9, 1) && 
+                            today < new Date(2027, 11, 1)) ? findResv(day, 1) : null;
+                        const findr1 = (i == 1 &&
+                            today >= new Date(2026, 9, 1) && 
+                            today < new Date(2027, 11, 1)) ? findResv(day, 0) : null;
                     %>
                     <% if (r) { %>
 
-                        <!-- 自分の予約 -->
-                        <% if (isMine) { %>
-                            <div class="slot-card mine <%= (isPast) ? 'reserved' : 'reserved-fulltime' %>"
+                        <!-- 社員の予約 -->
+                        <% if (isMine && isFullTimeEmployee) { %>
+                            <div class="slot-card mine <%= (isPast) ? 'reserved-fulltime-past' : 'reserved-fulltime' %>"
+                                data-day="<%= day %>"
+                                data-slot="<%= i %>"
+                                data-json='<%- JSON.stringify(r) %>'
+                                onclick="openDetail(this)">
+                                <div class="slot-time">
+                                    <%= timeslots[i] %>
+                                    <%= (isPast) ? '（施術済）' : '（予約済）' %>
+                                </div>
+                            </div>
+
+                        <!-- 社員以外の予約 -->
+                        <% } else if (isMine && !isFullTimeEmployee) { %>
+                            <div class="slot-card mine <%= (isPast) ? 'reserved-other-past' : 'reserved-other' %>"
                                 data-day="<%= day %>"
                                 data-slot="<%= i %>"
                                 data-json='<%- JSON.stringify(r) %>'
@@ -193,6 +217,12 @@
 
                     <!-- 過去日の空き枠（クリック不可） -->
                     <% } else if (isPast) { %>
+                        <div class="slot-card excluded">
+                            <div class="slot-time"><%= timeslots[i] %></div>
+                        </div>
+
+                    <!-- 予約枠ロック -->
+                    <% } else if ((i == 0 && findr0) || (i == 1 && findr1)) { %>
                         <div class="slot-card excluded">
                             <div class="slot-time"><%= timeslots[i] %></div>
                         </div>

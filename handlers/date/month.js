@@ -77,7 +77,7 @@ function getThursdaysInRange(year, month, startDay, endDay) {
         : 7 - (dow - 4);
     let current = new Date(year, month, startDay + diff);
 
-    while (current.getDate() <= endDay && current.getMonth() === month) {
+    while (current.getDate() <= endDay && current.getMonth() === start.getMonth()) {
         result.push(d2str(current));
         current = new Date(year, month, current.getDate() + 7);
     }
