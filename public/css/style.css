@@ -305,15 +305,17 @@ body {
     background-color: rgb(225, 238, 253);
 }
 
+/* （セル設定） */
+.cell {
+    color: rgba(200, 200, 200, 0.8);
+}
 /* （セル設定）過去日 */
 .excluded {
     background-color: LightSlateGray;
-    color: rgba(0,0,0,0.6);
 }
 /* （セル設定）予約済み */
 .reserved {
     background-color: LightSlateGray;
-    color: rgba(0,0,0,0.6);
     font-size: x-large;
     font-weight: 600;
 }

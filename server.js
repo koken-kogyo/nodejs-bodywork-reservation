@@ -74,19 +74,21 @@ async function renderSchedule(base, req, res) {
     const reservations = await mysqlHandler.getKD7000(first, last);
 
     res.render("schedule", {
-        user: req.session.user ?? null,
-        title: `${base.getMonth() + 1}月度`,
-        prevmonth: H.d2str(H.getPrevMonth(base)),
-        nextmonth: H.d2str(H.getNextMonth(base)),
-        timeslots: H.getActiveTimeSlots(base),
-        monthlyThursdays,
-        reservations,
-        d2mdw: H.d2mdw,
-        findResv: (day, slot) => {
+        user: req.session.user ?? null
+        , title: `${base.getMonth() + 1}月度`
+        , prevmonth: H.d2str(H.getPrevMonth(base))
+        , nextmonth: H.d2str(H.getNextMonth(base))
+        , timeslots: H.getActiveTimeSlots(base)
+        , monthlyThursdays
+        , reservations
+        , d2mdw: H.d2mdw
+        , findResv: (day, slot) => {
             return reservations.find(r =>
                 r.RESERVDT.startsWith(day) && r.TIMESLOT === slot
             );
         }
+        , getStartDateTime: H.getStartDateTime
+        , getOneHourBeforeStartTime: H.getOneHourBeforeStartTime
     });
 }
 
