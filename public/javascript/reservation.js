@@ -6,6 +6,7 @@
 let selectedDay = null;
 let selectedSlot = null;
 function openNotice(cell) {
+    stopRefreshTimer();
     const day = cell.dataset.day;
     const slot = Number(cell.dataset.slot);
     selectedDay = day;
@@ -18,11 +19,18 @@ function closeNotice() {
 
 /* おしらせからの予約画面 */
 function openReserve() {
+    stopRefreshTimer();
     closeNotice();
     const timeslots = getTimeslotsFromTable();
     document.getElementById("reserve-date").innerText = selectedDay.substring(0, 10);
     document.getElementById("reserve-timeslot-name").innerText = timeslots[selectedSlot];
     document.getElementById("reserve-timeslot").value = selectedSlot;
+    // 過去日ロック解除
+    document.getElementById("reserve-treatment").disabled = false;
+    const note = document.getElementById("reserve-note");
+    note.readOnly = false;
+    note.style.background = ""; 
+    // 初期値ボタン
     document.getElementById("reserve-cancel-button").style.display = "none";
     document.getElementById("reserve-button").style.display = "block";
     document.getElementById("reserve-button").innerText = "予約";
@@ -31,6 +39,7 @@ function openReserve() {
 
 // スマホ版の場合はお知らせなしのダイレクト予約画面
 function openReserveDirect(cell) {
+    stopRefreshTimer();
     selectedDay = cell.dataset.day;
     selectedSlot = Number(cell.dataset.slot);
     openReserve();
@@ -38,6 +47,7 @@ function openReserveDirect(cell) {
 
 /* 予約確認画面 */
 function openDetail(cell) {
+    stopRefreshTimer();
     const json = JSON.parse(cell.dataset.json);
     const timeslots = getTimeslotsFromTable();
     selectedDay = json.RESERVDT;
@@ -51,12 +61,19 @@ function openDetail(cell) {
     // 過去日判定
     const today = new Date();
     const resvDate = new Date(json.RESERVDT);
-    const isPast = resvDate < today;
+    let isPast = resvDate < today &&
+        !(resvDate.toDateString() == today.toDateString());
+
+    // 当日予約枠ロック判定
+    if (resvDate.toDateString() == today.toDateString())
+    {
+        const deadline = getOneHourBeforeStartTime(resvDate, Number(selectedSlot));
+        isPast = (new Date() >= deadline)
+    }
 
     // 過去日はロックする
     const treatment = document.getElementById("reserve-treatment");
     const note = document.getElementById("reserve-note");
-
     if (isPast) {
         treatment.disabled = true;   // セレクトボックスをロック
         note.readOnly = true;        // テキストエリアをロック（disabledでもOK）
@@ -77,7 +94,9 @@ function openDetail(cell) {
 /* 予約画面を閉じる */
 function closeReserve() {
     document.getElementById("reserve-modal").style.display = "none";
+    startRefreshTimer();
 }
+
 
 // PCテーブルの <tbody><th> から timeslots を再構築
 function getTimeslotsFromTable() {
@@ -93,12 +112,43 @@ function getTimeslotsFromTable() {
     return list;
 }
 
+// handlers\tomeslot.jsの関数群をローカル版に改造
+// 　timeslotが0または1の場合はdeadline==15:10を返却
+// 　それ以外は開始日時の1時間前のdeadlineを返却
+function getOneHourBeforeStartTime(reserveday, timeslot) {
+    // "① 16:20 ～ 16:50" → "16:20"
+    if (reserveday >= new Date("2026-09-01") &&
+        reserveday < new Date("2027-11-01") && 
+        (timeslot == 0 || timeslot == 1))
+    {
+        reserveday.setHours(15, 10, 0, 0);
+    } else {
+        const slots = getTimeslotsFromTable();
+        if (timeslot < 0 || timeslot >= slots.length) return new Date("2999-12-31");
+        const st = slots[timeslot].split(' ')[1];
+        const [hour, minute] = st.split(':').map(Number);
+        reserveday.setHours(hour - 1, minute, 0, 0);
+    }
+    return reserveday;
+}
 
 
 
 /*
  * イベントリスナー関連
  */
+
+/* 1分毎リロード処理*/
+let timerId = null;
+startRefreshTimer(); // 画面表示時
+function startRefreshTimer() {
+    timerId = setTimeout(() => {
+        location.reload();
+    }, 60000);
+}
+function stopRefreshTimer() {
+    clearTimeout(timerId);
+}
 
 /* 従業員番号入力 */
 let isComposing = false; // IME全角入力の未確定状態かそれ以外かを判定
@@ -204,6 +254,7 @@ async function reserve() {
             const err = await res.json();
             alert("予約に失敗しました．\n" + err.msg);
         }
+        startRefreshTimer();
         location.reload();
     } catch (e) {
         alert("異常が発生しました。\n通信状況等をご確認ください。"); // ネットワークエラー（サーバに届いていない）
@@ -277,6 +328,7 @@ async function reserveCancel() {
             const err = await res.json();
             alert("予約取消に失敗しました．\n" + err.msg);
         }
+        startRefreshTimer();
         location.reload();
     } catch (e) {
         alert("異常が発生しました。\n通信状況等をご確認ください。"); // ネットワークエラー（サーバに届いていない）

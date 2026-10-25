@@ -68,8 +68,17 @@
                             const r = findResv(day, i); 
                             const today = new Date();
                             const cellDate = new Date(day);   // day は "2026-10-01" の形式
-                            const isPast = cellDate < today &&
+                            // 過去日判定
+                            let isPast = cellDate < today &&
                                 !(cellDate.toDateString() == today.toDateString());
+                            // 当日deadline 判定 (handlers\timeslot.js 関数より)
+                            // 1. timeslotが0または1の場合は、deadline==15:10
+                            // 2. それ以外は開始時刻の1時間前
+                            if (cellDate.toDateString() == today.toDateString())
+                            {
+                                const deadline = getOneHourBeforeStartTime(cellDate, i);
+                                isPast = (new Date() >= deadline);
+                            }
                             const isMine = loggedIn && user && user.empno && user.empno === (r ? r.EMPNO : "");
                             const isFullTimeEmployee = loggedIn && user && user.empno &&
                                 (user.empno.startsWith('1') || user.empno.startsWith('2') ||
@@ -81,7 +90,6 @@
                             const findr1 = (i == 1 &&
                                 today >= new Date(2026, 9, 1) && 
                                 today < new Date(2027, 11, 1)) ? findResv(day, 0) : null;
-                            const deadline = getOneHourBeforeStartTime(cellDate, i);
                         %>
                         <% if (r) { %>
 
@@ -121,15 +129,6 @@
 
                         <!-- 予約枠ロック -->
                         <% } else if ((i == 0 && findr0) || (i == 1 && findr1)) { %>
-                            <td class="cell empty excluded">
-                                －
-                            </td>
-
-                        <!-- 当日deadline 判定 (handlers\timeslot.js 関数より) -->
-                        <!-- 　1. timeslotが0または1の場合は、deadline==15:10を判定 -->
-                        <!-- 　2. それ以外は1時間前を判定 -->
-                        <% } else if (cellDate.toDateString() == today.toDateString() &&
-                                new Date() >= deadline) { %>
                             <td class="cell empty excluded">
                                 －
                             </td>
@@ -178,8 +177,16 @@
                         const r = findResv(day, i);
                         const today = new Date();
                         const cellDate = new Date(day);
-                        const isPast = cellDate < today &&
+                        let isPast = cellDate < today &&
                             !(cellDate.toDateString() == today.toDateString());
+                        // 当日deadline 判定 (handlers\timeslot.js 関数より)
+                        // 1. timeslotが0または1の場合は、deadline==15:10
+                        // 2. それ以外は開始時刻の1時間前
+                        if (cellDate.toDateString() == today.toDateString())
+                        {
+                            const deadline = getOneHourBeforeStartTime(cellDate, i);
+                            isPast = (new Date() >= deadline);
+                        }
                         const isMine = loggedIn && user && user.empno && user.empno === (r ? r.EMPNO : "");
                         const isFullTimeEmployee = loggedIn && user && user.empno &&
                             (user.empno.startsWith('1') || user.empno.startsWith('2') ||
@@ -191,7 +198,6 @@
                         const findr1 = (i == 1 &&
                             today >= new Date(2026, 9, 1) && 
                             today < new Date(2027, 11, 1)) ? findResv(day, 0) : null;
-                        const deadline = getOneHourBeforeStartTime(cellDate, i);
                     %>
                     <% if (r) { %>
 
@@ -245,18 +251,6 @@
 
                     <!-- 予約枠ロック -->
                     <% } else if ((i == 0 && findr0) || (i == 1 && findr1)) { %>
-                        <div class="slot-card excluded">
-                            <div class="slot-time">
-                                <%= timeslots[i] %>
-                                　－
-                            </div>
-                        </div>
-
-                    <!-- 当日deadline 判定 (handlers\timeslot.js 関数より) -->
-                    <!-- 　1. timeslotが0または1の場合は、deadline==15:10を判定 -->
-                    <!-- 　2. それ以外は1時間前を判定 -->
-                    <% } else if (cellDate.toDateString() == today.toDateString() &&
-                            new Date() >= deadline) { %>
                         <div class="slot-card excluded">
                             <div class="slot-time">
                                 <%= timeslots[i] %>
